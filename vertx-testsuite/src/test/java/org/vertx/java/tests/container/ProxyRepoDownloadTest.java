@@ -1,4 +1,4 @@
-package org.vertx.java.tests;
+package org.vertx.java.tests.container;
 /*
  * Copyright 2013 Red Hat, Inc.
  *
@@ -21,10 +21,12 @@ import org.junit.Test;
 import org.vertx.java.testframework.TestBase;
 import vertx.tests.RepoDownloadTestClient;
 
-public class RepoDownloadTest extends TestBase {
+public class ProxyRepoDownloadTest extends TestBase {
 
   @Override
   protected void setUp() throws Exception {
+    System.setProperty("http.proxyHost", "127.0.0.1");
+    System.setProperty("http.proxyPort", "9193");
     super.setUp();
 
     startApp(RepoDownloadTestClient.class.getName());
@@ -33,18 +35,14 @@ public class RepoDownloadTest extends TestBase {
     Thread.sleep(1000);
   }
 
-  @Override
   protected void tearDown() throws Exception {
     super.tearDown();
+    System.clearProperty("http.proxyHost");
+    System.clearProperty("http.proxyPort");
   }
 
   @Test
-  public void testMavenDownload() throws Exception {
-    startTest(getMethodName());
-  }
-
-  @Test
-  public void testBintrayDownload() throws Exception {
+  public void testMavenDownloadWithProxy() throws Exception {
     startTest(getMethodName());
   }
 }

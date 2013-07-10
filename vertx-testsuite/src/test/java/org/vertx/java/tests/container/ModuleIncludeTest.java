@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package org.vertx.java.tests;
+package org.vertx.java.tests.container;
 
 import org.junit.Test;
 import org.vertx.java.testframework.TestBase;
-import vertx.tests.AsyncStartClient;
-import vertx.tests.MultiThreadedTestClient;
-import vertx.tests.TestClient;
 
 /**
+ * Include tests for modules
+ *
+ * The actual tests are actually written in JavaScript
+ *
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class JavaDeployTest extends TestBase {
+public class ModuleIncludeTest extends TestBase {
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    startApp(TestClient.class.getName());
+
   }
 
   @Override
@@ -39,44 +40,56 @@ public class JavaDeployTest extends TestBase {
   }
 
   @Test
-  public void testDeployWithConfig() throws Exception {
+  public void testSimpleInclude() throws Exception {
+    startMod("io.vertx~testmod1-1~1.0");
     startTest(getMethodName());
   }
 
   @Test
-  public void testDeployVerticle() throws Exception {
+  public void testChainedInclude() throws Exception {
+    startMod("io.vertx~testmod2-1~1.0");
     startTest(getMethodName());
   }
 
   @Test
-  public void testUndeployVerticle() throws Exception {
+  public void testMultipleIncludes() throws Exception {
+    startMod("io.vertx~testmod3-1~1.0");
     startTest(getMethodName());
   }
 
   @Test
-  public void testDeployModule() throws Exception {
+  public void testCircularInclude() throws Exception {
+    String deployID = startMod("io.vertx~testmod4-1~1.0");
+    assertNull(deployID); // Null implies module deploy fails - which it will because of circular deps
+  }
+
+  @Test
+  public void testSimpleIncludeJar() throws Exception {
+    startMod("io.vertx~testmod5-1~1.0");
     startTest(getMethodName());
   }
 
   @Test
-  public void testUndeployModule() throws Exception {
+  public void testChainedIncludeJar() throws Exception {
+    startMod("io.vertx~testmod6-1~1.0");
     startTest(getMethodName());
   }
 
   @Test
-  public void testDeployNestedModule() throws Exception {
+  public void testMultipleIncludesJar() throws Exception {
+    startMod("io.vertx~testmod7-1~1.0");
     startTest(getMethodName());
   }
 
   @Test
-  public void testStarted() throws Exception {
-    startApp(AsyncStartClient.class.getName());
+  public void testNestedIncludesJar() throws Exception {
+    startMod("io.vertx~testmod8-1~1.0");
     startTest(getMethodName());
   }
-
+  
   @Test
-  public void testMultiThreaded() throws Exception {
-    startApp(MultiThreadedTestClient.class.getName());
+  public void testMultipleIncludesArray() throws Exception {
+    startMod("io.vertx~testmod9-1~1.0");
     startTest(getMethodName());
   }
 
