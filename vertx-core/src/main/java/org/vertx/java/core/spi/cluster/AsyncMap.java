@@ -16,9 +16,10 @@
 
 package org.vertx.java.core.spi.cluster;
 
+import java.util.concurrent.ConcurrentMap;
+
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Handler;
-
 
 /**
  *
@@ -30,14 +31,14 @@ import org.vertx.java.core.Handler;
  * @author <a href="http://tfox.org">Tim Fox</a>
  *
  */
-public interface AsyncMap<K, V> {
+public interface AsyncMap<K, V> extends ConcurrentMap<K, V> {
 
   /**
    * Get a value from the map, asynchronously.
-   * @param k The key
+   * @param o The key
    * @param resultHandler - this will be called some time later with the async result.
    */
-  void get(K k, Handler<AsyncResult<V>> resultHandler);
+  void get(Object o, Handler<AsyncResult<V>> resultHandler);
 
   /**
    * Put a value in the map, asynchronously.
@@ -49,8 +50,8 @@ public interface AsyncMap<K, V> {
 
   /**
    * Remove a value from the map, asynchronously.
-   * @param k The key
+   * @param o The key
    * @param completionHandler - this will be called some time later to signify the value has been removed
    */
-  void remove(K k, Handler<AsyncResult<Void>> completionHandler);
+  void remove(Object o, Handler<AsyncResult<Void>> completionHandler);
 }

@@ -16,22 +16,37 @@
 
 package org.vertx.java.core.shareddata.impl;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.Handler;
+import org.vertx.java.core.impl.DefaultFutureResult;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.logging.impl.LoggerFactory;
 import org.vertx.java.core.shareddata.ConcurrentSharedMap;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class SharedMap<K, V> implements ConcurrentSharedMap<K, V> {
+public class DefaultSharedMap<K, V> implements ConcurrentSharedMap<K, V> {
 
-  private static final Logger log = LoggerFactory.getLogger(SharedMap.class);
+  private static final Logger log = LoggerFactory.getLogger(DefaultSharedMap.class);
 
-  private final ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
+  private final ConcurrentMap<K, V> map;
+
+  public DefaultSharedMap() {
+    this(new ConcurrentHashMap<K, V>());
+  }
+
+  public DefaultSharedMap(ConcurrentMap<K, V> map) {
+    this.map = map;
+  }
 
   public V putIfAbsent(K k, V v) {
     Checker.checkType(k);
@@ -74,14 +89,28 @@ public class SharedMap<K, V> implements ConcurrentSharedMap<K, V> {
     return Checker.copyIfRequired(map.get(o));
   }
 
+  public void get(Object o, Handler<AsyncResult<V>> resultHandler) {
+    resultHandler.handle(new DefaultFutureResult<V>(this.get(o)));
+  }
+
   public V put(K k, V v) {
     Checker.checkType(k);
     Checker.checkType(v);
     return map.put(k, v);
   }
 
+  public void put(K k, V v, Handler<AsyncResult<Void>> completionHandler) {
+    this.put(k, v);
+    completionHandler.handle(new DefaultFutureResult<Void>((Void) null));
+  }
+
   public V remove(Object o) {
     return Checker.copyIfRequired(map.remove(o));
+  }
+
+  public void remove(Object o, Handler<AsyncResult<Void>> completionHandler) {
+    this.remove(o);
+    completionHandler.handle(new DefaultFutureResult<Void>((Void) null));
   }
 
   public void putAll(Map<? extends K, ? extends V> map) {
@@ -98,7 +127,7 @@ public class SharedMap<K, V> implements ConcurrentSharedMap<K, V> {
 
   public Set<K> keySet() {
     Set<K> copied = new HashSet<>();
-    for (K k: map.keySet()) {
+    for (K k : map.keySet()) {
       copied.add(Checker.copyIfRequired(k));
     }
     return copied;
@@ -106,7 +135,7 @@ public class SharedMap<K, V> implements ConcurrentSharedMap<K, V> {
 
   public Collection<V> values() {
     Collection<V> copied = new ArrayList<>();
-    for (V v: map.values()) {
+    for (V v : map.values()) {
       copied.add(Checker.copyIfRequired(v));
     }
     return copied;
@@ -153,4 +182,5 @@ public class SharedMap<K, V> implements ConcurrentSharedMap<K, V> {
       return old;
     }
   }
+
 }

@@ -16,7 +16,12 @@
 
 package org.vertx.java.spi.cluster.impl.hazelcast;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
 import com.hazelcast.core.IMap;
+
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.spi.Action;
@@ -34,10 +39,10 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   }
 
   @Override
-  public void get(final K k, Handler<AsyncResult<V>> asyncResultHandler) {
+  public void get(final Object o, Handler<AsyncResult<V>> asyncResultHandler) {
     vertx.executeBlocking(new Action<V>() {
       public V perform() {
-        return map.get(k);
+        return map.get(o);
       }
     }, asyncResultHandler);
   }
@@ -53,12 +58,92 @@ class HazelcastAsyncMap<K, V> implements AsyncMap<K, V> {
   }
 
   @Override
-  public void remove(final K k, Handler<AsyncResult<Void>> completionHandler) {
+  public void remove(final Object o, Handler<AsyncResult<Void>> completionHandler) {
     vertx.executeBlocking(new Action<Void>() {
       public Void perform() {
-        map.remove(k);
+        map.remove(o);
         return null;
       }
     }, completionHandler);
+  }
+
+  @Override
+  public V putIfAbsent(K key, V value) {
+    return map.putIfAbsent(key, value);
+  }
+
+  @Override
+  public boolean remove(Object key, Object value) {
+    return map.remove(key, value);
+  }
+
+  @Override
+  public boolean replace(K key, V oldValue, V newValue) {
+    return map.replace(key, oldValue, newValue);
+  }
+
+  @Override
+  public V replace(K key, V value) {
+    return map.replace(key, value);
+  }
+
+  @Override
+  public int size() {
+    return map.size();
+  }
+
+  @Override
+  public boolean isEmpty() {
+    return map.isEmpty();
+  }
+
+  @Override
+  public boolean containsKey(Object key) {
+    return map.containsKey(key);
+  }
+
+  @Override
+  public boolean containsValue(Object value) {
+    return map.containsValue(value);
+  }
+
+  @Override
+  public V get(Object key) {
+    return map.get(key);
+  }
+
+  @Override
+  public V put(K key, V value) {
+    return map.put(key, value);
+  }
+
+  @Override
+  public V remove(Object key) {
+    return map.remove(key);
+  }
+
+  @Override
+  public void putAll(Map<? extends K, ? extends V> m) {
+    map.putAll(m);
+  }
+
+  @Override
+  public void clear() {
+    map.clear();
+  }
+
+  @Override
+  public Set<K> keySet() {
+    return map.keySet();
+  }
+
+  @Override
+  public Collection<V> values() {
+    return map.values();
+  }
+
+  @Override
+  public Set<java.util.Map.Entry<K, V>> entrySet() {
+    return map.entrySet();
   }
 }

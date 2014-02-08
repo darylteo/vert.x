@@ -17,6 +17,9 @@ package org.vertx.java.core.shareddata;
 
 import java.util.concurrent.ConcurrentMap;
 
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.Handler;
+
 /**
  * ConcurrentSharedMap has very similar semantics as ConcurrentMap with the difference that any updates made to
  * the collections returned from keySet, valueSet and entrySet methods do not change the keys and values in the
@@ -27,4 +30,25 @@ import java.util.concurrent.ConcurrentMap;
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public interface ConcurrentSharedMap<K, V> extends ConcurrentMap<K, V> {
+  /**
+   * Get a value from the map, asynchronously.
+   * @param o The key
+   * @param resultHandler - this will be called some time later with the async result.
+   */
+  void get(Object o, Handler<AsyncResult<V>> resultHandler);
+
+  /**
+   * Put a value in the map, asynchronously.
+   * @param k The key
+   * @param v The value
+   * @param completionHandler - this will be called some time later to signify the value has been put
+   */
+  void put(K k, V v, Handler<AsyncResult<Void>> completionHandler);
+
+  /**
+   * Remove a value from the map, asynchronously.
+   * @param o The key
+   * @param completionHandler - this will be called some time later to signify the value has been removed
+   */
+  void remove(Object o, Handler<AsyncResult<Void>> completionHandler);
 }

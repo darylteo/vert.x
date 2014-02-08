@@ -16,20 +16,32 @@
 
 package org.vertx.java.fakecluster;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.spi.Action;
 import org.vertx.java.core.spi.VertxSPI;
-import org.vertx.java.core.spi.cluster.*;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import org.vertx.java.core.spi.cluster.AsyncMap;
+import org.vertx.java.core.spi.cluster.AsyncMultiMap;
+import org.vertx.java.core.spi.cluster.ChoosableIterable;
+import org.vertx.java.core.spi.cluster.ClusterManager;
+import org.vertx.java.core.spi.cluster.NodeListener;
 
 public class FakeClusterManager implements ClusterManager {
 
   private static Map<String, FakeClusterManager> nodes =
-      Collections.synchronizedMap(new LinkedHashMap<String, FakeClusterManager>());
+    Collections.synchronizedMap(new LinkedHashMap<String, FakeClusterManager>());
 
   private static List<NodeListener> nodeListeners = new ArrayList<>();
   private static ConcurrentMap<String, Map> syncMaps = new ConcurrentHashMap<>();
@@ -49,7 +61,7 @@ public class FakeClusterManager implements ClusterManager {
       throw new IllegalStateException("Node has already joined!");
     }
     nodes.put(nodeID, node);
-    for (NodeListener listener: nodeListeners) {
+    for (NodeListener listener : nodeListeners) {
       listener.nodeAdded(nodeID);
     }
   }
@@ -59,7 +71,7 @@ public class FakeClusterManager implements ClusterManager {
       throw new IllegalStateException("Node hasn't joined!");
     }
     nodes.remove(nodeID);
-    for (NodeListener listener: nodeListeners) {
+    for (NodeListener listener : nodeListeners) {
       listener.nodeLeft(nodeID);
     }
 
@@ -81,10 +93,10 @@ public class FakeClusterManager implements ClusterManager {
 
   @Override
   public <K, V> AsyncMultiMap<K, V> getAsyncMultiMap(String name) {
-    AsyncMultiMap<K, V> map = (AsyncMultiMap<K, V>)asyncMultiMaps.get(name);
+    AsyncMultiMap<K, V> map = (AsyncMultiMap<K, V>) asyncMultiMaps.get(name);
     if (map == null) {
       map = new FakeAsyncMultiMap<>();
-      AsyncMultiMap<K, V> prevMap = (AsyncMultiMap<K, V>)asyncMultiMaps.putIfAbsent(name, map);
+      AsyncMultiMap<K, V> prevMap = (AsyncMultiMap<K, V>) asyncMultiMaps.putIfAbsent(name, map);
       if (prevMap != null) {
         map = prevMap;
       }
@@ -94,10 +106,10 @@ public class FakeClusterManager implements ClusterManager {
 
   @Override
   public <K, V> AsyncMap<K, V> getAsyncMap(String name) {
-    AsyncMap<K, V> map = (AsyncMap<K, V>)asyncMaps.get(name);
+    AsyncMap<K, V> map = (AsyncMap<K, V>) asyncMaps.get(name);
     if (map == null) {
       map = new FakeAsyncMap<>();
-      AsyncMap<K, V> prevMap = (AsyncMap<K, V>)asyncMaps.putIfAbsent(name, map);
+      AsyncMap<K, V> prevMap = (AsyncMap<K, V>) asyncMaps.putIfAbsent(name, map);
       if (prevMap != null) {
         map = prevMap;
       }
@@ -107,10 +119,10 @@ public class FakeClusterManager implements ClusterManager {
 
   @Override
   public <K, V> Map<K, V> getSyncMap(String name) {
-    Map<K, V> map = (Map<K, V>)syncMaps.get(name);
+    Map<K, V> map = (Map<K, V>) syncMaps.get(name);
     if (map == null) {
       map = new ConcurrentHashMap<>();
-      Map<K, V> prevMap = (Map<K, V>)syncMaps.putIfAbsent(name, map);
+      Map<K, V> prevMap = (Map<K, V>) syncMaps.putIfAbsent(name, map);
       if (prevMap != null) {
         map = prevMap;
       }
@@ -164,13 +176,13 @@ public class FakeClusterManager implements ClusterManager {
 
   private class FakeAsyncMap<K, V> implements AsyncMap<K, V> {
 
-    private Map<K, V> map = new ConcurrentHashMap<>();
+    private ConcurrentMap<K, V> map = new ConcurrentHashMap<>();
 
     @Override
-    public void get(final K k, Handler<AsyncResult<V>> asyncResultHandler) {
+    public void get(final Object o, Handler<AsyncResult<V>> asyncResultHandler) {
       vertx.executeBlocking(new Action<V>() {
         public V perform() {
-          return map.get(k);
+          return map.get(o);
         }
       }, asyncResultHandler);
     }
@@ -186,13 +198,93 @@ public class FakeClusterManager implements ClusterManager {
     }
 
     @Override
-    public void remove(final K k, Handler<AsyncResult<Void>> completionHandler) {
+    public void remove(final Object o, Handler<AsyncResult<Void>> completionHandler) {
       vertx.executeBlocking(new Action<Void>() {
         public Void perform() {
-          map.remove(k);
+          map.remove(o);
           return null;
         }
       }, completionHandler);
+    }
+
+    @Override
+    public V putIfAbsent(K key, V value) {
+      return map.putIfAbsent(key, value);
+    }
+
+    @Override
+    public boolean remove(Object key, Object value) {
+      return map.remove(key, value);
+    }
+
+    @Override
+    public boolean replace(K key, V oldValue, V newValue) {
+      return map.replace(key, oldValue, newValue);
+    }
+
+    @Override
+    public V replace(K key, V value) {
+      return map.replace(key, value);
+    }
+
+    @Override
+    public int size() {
+      return map.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return map.isEmpty();
+    }
+
+    @Override
+    public boolean containsKey(Object key) {
+      return map.containsKey(key);
+    }
+
+    @Override
+    public boolean containsValue(Object value) {
+      return map.containsValue(value);
+    }
+
+    @Override
+    public V get(Object key) {
+      return map.get(key);
+    }
+
+    @Override
+    public V put(K key, V value) {
+      return map.put(key, value);
+    }
+
+    @Override
+    public V remove(Object key) {
+      return map.remove(key);
+    }
+
+    @Override
+    public void putAll(Map<? extends K, ? extends V> m) {
+      map.putAll(m);
+    }
+
+    @Override
+    public void clear() {
+      map.clear();
+    }
+
+    @Override
+    public Set<K> keySet() {
+      return map.keySet();
+    }
+
+    @Override
+    public Collection<V> values() {
+      return map.values();
+    }
+
+    @Override
+    public Set<java.util.Map.Entry<K, V>> entrySet() {
+      return map.entrySet();
     }
   }
 

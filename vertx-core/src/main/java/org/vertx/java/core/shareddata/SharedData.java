@@ -16,14 +16,15 @@
 
 package org.vertx.java.core.shareddata;
 
-import org.vertx.java.core.logging.Logger;
-import org.vertx.java.core.logging.impl.LoggerFactory;
-import org.vertx.java.core.shareddata.impl.SharedMap;
-import org.vertx.java.core.shareddata.impl.SharedSet;
-
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import org.vertx.java.core.logging.Logger;
+import org.vertx.java.core.logging.impl.LoggerFactory;
+import org.vertx.java.core.shareddata.impl.DefaultSharedMap;
+import org.vertx.java.core.shareddata.impl.DefaultSharedSet;
+import org.vertx.java.core.spi.cluster.ClusterManager;
 
 /**
  * Sometimes it is desirable to share immutable data between different event loops, for example to implement a
@@ -55,22 +56,45 @@ public class SharedData {
 
   private static final Logger log = LoggerFactory.getLogger(SharedData.class);
 
-  private ConcurrentMap<Object, SharedMap<?, ?>> maps = new ConcurrentHashMap<>();
+  private ConcurrentMap<Object, ConcurrentSharedMap<?, ?>> maps = new ConcurrentHashMap<>();
   private ConcurrentMap<Object, SharedSet<?>> sets = new ConcurrentHashMap<>();
 
+  private ClusterManager manager;
+
+  public SharedData() {
+
+  }
+
+  public SharedData(ClusterManager manager) {
+    this.manager = manager;
+  }
+
   /**
-   * Return a {@code Map} with the specific {@code name}. All invocations of this method with the same value of {@code name}
-   * are guaranteed to return the same {@code Map} instance. <p>
+   * Return a {@code Map} with the specific {@code name}.
+   * 
+   * All invocations of this method with the same value of {@code name}
+   * are guaranteed to return the same {@code Map} instance.
+   * 
+   * If a map with this name does not exist, a new local shared map is instantiated and returned.
    */
   public <K, V> ConcurrentSharedMap<K, V> getMap(String name) {
-    SharedMap<K, V> map = (SharedMap<K, V>) maps.get(name);
+    return getMap(name, false);
+  }
+
+  /**
+   * Return a {@code Map} with the specific {@code name}. 
+   * All invocations of this method with the same value of {@code name}
+   * are guaranteed to return the same {@code Map} instance. 
+   * 
+   * @throws Exception - throws an exception if a map already exists, but does not match the clustered parameter.
+   * <p>
+   */
+  public <K, V> ConcurrentSharedMap<K, V> getMap(String name, boolean clustered) {
+    ConcurrentSharedMap<K, V> map = (ConcurrentSharedMap<K, V>) maps.get(name);
     if (map == null) {
-      map = new SharedMap<>();
-      SharedMap prev = maps.putIfAbsent(name, map);
-      if (prev != null) {
-        map = prev;
-      }
+      map = createAndReturnMap(name, clustered);
     }
+
     return map;
   }
 
@@ -79,13 +103,17 @@ public class SharedData {
    * are guaranteed to return the same {@code Set} instance. <p>
    */
   public <E> Set<E> getSet(String name) {
+    return getSet(name, false);
+  }
+
+  /**
+   * Return a {@code Set} with the specific {@code name}. All invocations of this method with the same value of {@code name}
+   * are guaranteed to return the same {@code Set} instance. <p>
+   */
+  public <E> Set<E> getSet(String name, boolean clustered) {
     SharedSet<E> set = (SharedSet<E>) sets.get(name);
     if (set == null) {
-      set = new SharedSet<>();
-      SharedSet prev = sets.putIfAbsent(name, set);
-      if (prev != null) {
-        set = prev;
-      }
+      set = createAndReturnSet(name, clustered);
     }
     return set;
   }
@@ -104,4 +132,45 @@ public class SharedData {
     return sets.remove(name) != null;
   }
 
+  private <K, V> ConcurrentSharedMap<K, V> createAndReturnMap(String name, boolean clustered) {
+    // clustered
+    clustered = this.manager != null && clustered;
+
+    ConcurrentSharedMap<K, V> map;
+
+    if (clustered) {
+      map = new DefaultSharedMap<K, V>(this.manager.<K, V> getAsyncMap(name));
+    } else {
+      map = new DefaultSharedMap<K, V>();
+    }
+
+    ConcurrentSharedMap prev = maps.putIfAbsent(name, map);
+
+    if (prev != null) {
+      map = prev;
+    }
+
+    return map;
+  }
+
+  private <E> SharedSet<E> createAndReturnSet(String name, boolean clustered) {
+    // clustered
+    clustered = this.manager != null && clustered;
+
+    SharedSet<E> set;
+
+    if (clustered) {
+      set = new DefaultSharedSet<E>(this.manager.<E, Object> getAsyncMap(name));
+    } else {
+      set = new DefaultSharedSet<E>();
+    }
+
+    SharedSet prev = sets.putIfAbsent(name, set);
+
+    if (prev != null) {
+      set = prev;
+    }
+
+    return set;
+  }
 }

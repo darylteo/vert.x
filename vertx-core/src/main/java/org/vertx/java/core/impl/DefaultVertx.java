@@ -19,7 +19,24 @@ package org.vertx.java.core.impl;
 import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.ResourceLeakDetector;
-import org.vertx.java.core.*;
+
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.AsyncResultHandler;
+import org.vertx.java.core.Context;
+import org.vertx.java.core.Handler;
+import org.vertx.java.core.Vertx;
 import org.vertx.java.core.datagram.DatagramSocket;
 import org.vertx.java.core.datagram.InternetProtocolFamily;
 import org.vertx.java.core.datagram.impl.DefaultDatagramSocket;
@@ -48,15 +65,6 @@ import org.vertx.java.core.spi.Action;
 import org.vertx.java.core.spi.cluster.ClusterManager;
 import org.vertx.java.core.spi.cluster.ClusterManagerFactory;
 
-import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.concurrent.*;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
@@ -73,7 +81,7 @@ public class DefaultVertx implements VertxInternal {
 
   private final FileSystem fileSystem = getFileSystem();
   private final EventBus eventBus;
-  private final SharedData sharedData = new SharedData();
+  private final SharedData sharedData;
 
   private ExecutorService backgroundPool = VertxExecutorFactory.workerPool("vert.x-worker-thread-");
   private final OrderedExecutorFactory orderedFact = new OrderedExecutorFactory(backgroundPool);
@@ -90,6 +98,7 @@ public class DefaultVertx implements VertxInternal {
   public DefaultVertx() {
     this.eventBus = new DefaultEventBus(this);
     this.clusterManager = null;
+    this.sharedData = new SharedData();
   }
 
   public DefaultVertx(String hostname) {
@@ -103,7 +112,7 @@ public class DefaultVertx implements VertxInternal {
       // We allow specify a sys prop for the cluster manager factory which overrides ServiceLoader
       try {
         Class<?> clazz = Class.forName(clusterManagerFactoryClassName);
-        factory = (ClusterManagerFactory)clazz.newInstance();
+        factory = (ClusterManagerFactory) clazz.newInstance();
       } catch (Exception e) {
         throw new IllegalStateException("Failed to instantiate " + clusterManagerFactoryClassName, e);
       }
@@ -116,6 +125,9 @@ public class DefaultVertx implements VertxInternal {
     }
     this.clusterManager = factory.createClusterManager(this);
     this.clusterManager.join();
+    
+    this.sharedData = new SharedData(this.clusterManager);
+
     final Vertx inst = this;
     this.eventBus = new DefaultEventBus(this, port, hostname, clusterManager, new AsyncResultHandler<Void>() {
       @Override
@@ -137,7 +149,7 @@ public class DefaultVertx implements VertxInternal {
    * @return The FileSystem implementation for the OS
    */
   protected FileSystem getFileSystem() {
-  	return Windows.isWindows() ? new WindowsFileSystem(this) : new DefaultFileSystem(this);
+    return Windows.isWindows() ? new WindowsFileSystem(this) : new DefaultFileSystem(this);
   }
 
   @Override
@@ -178,13 +190,13 @@ public class DefaultVertx implements VertxInternal {
   }
 
   public DefaultContext startOnEventLoop(final Runnable runnable) {
-    DefaultContext context  = createEventLoopContext();
+    DefaultContext context = createEventLoopContext();
     context.execute(runnable);
     return context;
   }
 
   public DefaultContext startInBackground(final Runnable runnable, final boolean multiThreaded) {
-    DefaultContext context  = createWorkerContext(multiThreaded);
+    DefaultContext context = createWorkerContext(multiThreaded);
     context.execute(runnable);
     return context;
   }
@@ -383,10 +395,10 @@ public class DefaultVertx implements VertxInternal {
         }
         if (resultHandler != null) {
           context.execute(new Runnable() {
-              public void run() {
-                res.setHandler(resultHandler);
-              }
-            });
+            public void run() {
+              res.setHandler(resultHandler);
+            }
+          });
         }
       }
     };
@@ -441,7 +453,7 @@ public class DefaultVertx implements VertxInternal {
     public void close(Handler<AsyncResult<Void>> doneHandler) {
       DefaultVertx.this.timeouts.remove(timerID);
       cancel();
-      doneHandler.handle(new DefaultFutureResult<>((Void)null));
+      doneHandler.handle(new DefaultFutureResult<>((Void) null));
     }
 
   }

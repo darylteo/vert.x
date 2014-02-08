@@ -19,16 +19,28 @@ package org.vertx.java.core.shareddata.impl;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.Handler;
+import org.vertx.java.core.shareddata.SharedSet;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
-public class SharedSet<E> implements Set<E> {
+public class DefaultSharedSet<E> implements SharedSet<E> {
 
-  private final Map<E, Object> map = new SharedMap<>();
+  private final Map<E, Object> map;
 
   private static final Object O = "wibble";
+
+  public DefaultSharedSet() {
+    this.map = new DefaultSharedMap<E, Object>();
+  }
+
+  public DefaultSharedSet(ConcurrentMap<E, Object> map) {
+    this.map = new DefaultSharedMap<E, Object>(map);
+  }
 
   public int size() {
     return map.size();
@@ -40,6 +52,11 @@ public class SharedSet<E> implements Set<E> {
 
   public boolean contains(Object o) {
     return map.containsKey(o);
+  }
+
+  public void contains(Object o, Handler<AsyncResult<Boolean>> resultHandler) {
+    // TODO Auto-generated method stub
+
   }
 
   public Iterator<E> iterator() {
@@ -58,8 +75,18 @@ public class SharedSet<E> implements Set<E> {
     return map.put(e, O) == null;
   }
 
+  public void add(E element, Handler<AsyncResult<Boolean>> resultHandler) {
+    // TODO Auto-generated method stub
+
+  }
+
   public boolean remove(Object o) {
     return map.remove(o) != null;
+  }
+
+  public void remove(Object o, Handler<AsyncResult<Boolean>> resultHandler) {
+    // TODO Auto-generated method stub
+
   }
 
   public boolean containsAll(Collection<?> objects) {
@@ -79,7 +106,7 @@ public class SharedSet<E> implements Set<E> {
 
   public boolean removeAll(Collection<?> objects) {
     boolean removed = false;
-    for (Object obj: objects) {
+    for (Object obj : objects) {
       if (map.remove(obj) != null) {
         removed = true;
       }
