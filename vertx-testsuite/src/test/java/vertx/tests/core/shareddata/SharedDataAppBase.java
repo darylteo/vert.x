@@ -129,14 +129,16 @@ public abstract class SharedDataAppBase extends TestClientBase {
   }
 
   public void testMapClustered() throws Exception {
-    final ConcurrentSharedMap<String, String> map = sharedData.getMap("foo", true);
-    ConcurrentSharedMap<String, String> map2 = sharedData.getMap("foo", true);
+    final ConcurrentSharedMap<String, String> map = sharedData.getClusterMap("foo");
+    ConcurrentSharedMap<String, String> map2 = sharedData.getClusterMap("foo");
     tu.azzert(map == map2);
-    ConcurrentSharedMap<String, String> map3 = sharedData.getMap("bar", true);
+    ConcurrentSharedMap<String, String> map3 = sharedData.getClusterMap("bar");
     tu.azzert(map3 != map2);
-    tu.azzert(sharedData.removeMap("foo"));
-    ConcurrentSharedMap<String, String> map4 = sharedData.getMap("foo", true);
+    tu.azzert(sharedData.removeClusterMap("foo"));
+    ConcurrentSharedMap<String, String> map4 = sharedData.getClusterMap("foo");
     tu.azzert(map4 != map3);
+    ConcurrentSharedMap<String, String> map5 = sharedData.getMap("foo");
+    tu.azzert(map5 != map4);
 
     /* Test Map Sync Operations */
     final String key = "key";
@@ -355,14 +357,16 @@ public abstract class SharedDataAppBase extends TestClientBase {
   }
 
   public void testSetClustered() throws Exception {
-    Set<String> set = sharedData.getSet("foo", true);
-    Set<String> set2 = sharedData.getSet("foo", true);
+    Set<String> set = sharedData.getClusterSet("foo");
+    Set<String> set2 = sharedData.getClusterSet("foo");
     assert (set == set2);
-    Set<String> set3 = sharedData.getSet("bar", true);
+    Set<String> set3 = sharedData.getClusterSet("bar");
     assert (set3 != set2);
-    assert (sharedData.removeSet("foo"));
-    Set<String> set4 = sharedData.getSet("foo", true);
+    assert (sharedData.removeClusterSet("foo"));
+    Set<String> set4 = sharedData.getClusterSet("foo");
     assert (set4 != set3);
+    Set<String> set5 = sharedData.getSet("foo");
+    tu.azzert(set5 != set4);
 
     tu.testComplete();
   }
