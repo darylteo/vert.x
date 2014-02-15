@@ -127,6 +127,17 @@ class HazelcastClusterManager implements ClusterManager, MembershipListener {
     return map;
   }
 
+  @Override
+  public boolean destroyMap(String name) {
+    IMap<?, ?> map = hazelcast.getMap(name);
+    if (map != null) {
+      map.destroy();
+      return true;
+    }
+
+    return false;
+  }
+
   public synchronized void leave() {
     if (!active) {
       return;

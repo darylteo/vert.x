@@ -16,14 +16,14 @@
 
 package org.vertx.java.core.shareddata.impl;
 
+import org.vertx.java.core.AsyncResult;
+import org.vertx.java.core.Handler;
+import org.vertx.java.core.shareddata.SharedSet;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-
-import org.vertx.java.core.AsyncResult;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.shareddata.SharedSet;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -120,7 +120,11 @@ public class DefaultSharedSet<E> implements SharedSet<E> {
 
   @Override
   public boolean equals(Object o) {
-    return map.equals(o);
+    if (o instanceof DefaultSharedSet<?>) {
+      return map.equals(((DefaultSharedSet<?>) o).map);
+    } else {
+      return false;
+    }
   }
 
   @Override

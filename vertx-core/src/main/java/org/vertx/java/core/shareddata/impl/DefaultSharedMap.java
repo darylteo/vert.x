@@ -16,20 +16,16 @@
 
 package org.vertx.java.core.shareddata.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.impl.DefaultFutureResult;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.logging.impl.LoggerFactory;
 import org.vertx.java.core.shareddata.ConcurrentSharedMap;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>
@@ -151,7 +147,11 @@ public class DefaultSharedMap<K, V> implements ConcurrentSharedMap<K, V> {
 
   @Override
   public boolean equals(Object o) {
-    return map.equals(o);
+    if (o instanceof DefaultSharedMap<?,?>) {
+      return map.equals(((DefaultSharedMap<?,?>) o).map);
+    } else {
+      return false;
+    }
   }
 
   @Override

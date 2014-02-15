@@ -119,6 +119,11 @@ public class FakeClusterManager implements ClusterManager {
   }
 
   @Override
+  public boolean destroyMap(String name) {
+    return false;
+  }
+
+  @Override
   public String getNodeID() {
     return nodeID;
   }

@@ -57,19 +57,23 @@ public class SharedData {
   private static final Logger log = LoggerFactory.getLogger(SharedData.class);
 
   private ConcurrentMap<Object, ConcurrentSharedMap<?, ?>> instanceMaps = new ConcurrentHashMap<>();
-  private ConcurrentMap<Object, ConcurrentSharedMap<?, ?>> clusterMaps = new ConcurrentHashMap<>();
+  private ConcurrentMap<Object, ConcurrentSharedMap<?, ?>> clusterMaps;
 
   private ConcurrentMap<Object, SharedSet<?>> instanceSets = new ConcurrentHashMap<>();
-  private ConcurrentMap<Object, SharedSet<?>> clusterSets = new ConcurrentHashMap<>();
+  private ConcurrentMap<Object, SharedSet<?>> clusterSets;
 
   private ClusterManager manager;
 
   public SharedData() {
-
+    this.clusterMaps = new ConcurrentHashMap<>();
+    this.clusterSets = new ConcurrentHashMap<>();
   }
 
   public SharedData(ClusterManager manager) {
     this.manager = manager;
+
+    this.clusterMaps = null;
+    this.clusterSets = null;
   }
 
   /**
@@ -102,17 +106,17 @@ public class SharedData {
   public <K, V> ConcurrentSharedMap<K, V> getClusterMap(String name) {
     ConcurrentSharedMap<K, V> map;
 
+    // cluster platforms will maintain their maps internally so no need to store it ourselves.
     if (this.manager != null) {
       map = new DefaultSharedMap<K, V>(this.manager.<K, V>getAsyncMap(name));
     } else {
       map = new DefaultSharedMap<K, V>();
-    }
 
-    ConcurrentSharedMap prev = this.clusterMaps.putIfAbsent(name, map);
+      ConcurrentSharedMap prev = this.clusterMaps.putIfAbsent(name, map);
 
-    if (prev != null) {
-      map = prev;
-      //TODO: if previous map exists (i.e. a map was created in the time we checked then we need to destroy the one we just created)
+      if (prev != null) {
+        map = prev;
+      }
     }
 
     return map;
@@ -142,19 +146,19 @@ public class SharedData {
   public <E> Set<E> getClusterSet(String name) {
     SharedSet<E> set;
 
+    // cluster platforms will maintain their maps internally so no need to store it ourselves.
     if (this.manager != null) {
       set = new DefaultSharedSet<E>(this.manager.<E, Object>getAsyncMap(name));
     } else {
       set = new DefaultSharedSet<E>();
+
+      SharedSet prev = this.clusterSets.putIfAbsent(name, set);
+
+      if (prev != null) {
+        set = prev;
+        //TODO: if previous set exists (i.e. a map was created in the time we checked then we need to destroy the one we just created)
+      }
     }
-
-    SharedSet prev = this.clusterSets.putIfAbsent(name, set);
-
-    if (prev != null) {
-      set = prev;
-      //TODO: if previous set exists (i.e. a map was created in the time we checked then we need to destroy the one we just created)
-    }
-
     return set;
   }
 
@@ -168,8 +172,12 @@ public class SharedData {
   /**
    * Remove the cluster {@code Map} with the specific {@code name}.
    */
-  public boolean removeClusterMap(Object name) {
-    return clusterMaps.remove(name) != null;
+  public boolean removeClusterMap(String name) {
+    if (this.manager != null) {
+      return this.manager.destroyMap(name);
+    } else {
+      return clusterMaps.remove(name) != null;
+    }
   }
 
   /**
@@ -182,7 +190,11 @@ public class SharedData {
   /**
    * Remove the cluster {@code Set} with the specific {@code name}.
    */
-  public boolean removeClusterSet(Object name) {
-    return clusterSets.remove(name) != null;
+  public boolean removeClusterSet(String name) {
+    if (this.manager != null) {
+      return this.manager.destroyMap(name);
+    } else {
+      return clusterSets.remove(name) != null;
+    }
   }
 }

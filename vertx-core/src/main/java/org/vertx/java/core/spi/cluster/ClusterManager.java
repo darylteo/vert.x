@@ -57,6 +57,13 @@ public interface ClusterManager {
   <K, V> Map<K, V> getSyncMap(String name);
 
   /**
+   * Destroys a map from the cluster with the given name
+   * @param name
+   * @return
+   */
+  boolean destroyMap(String name);
+
+  /**
    * Return the unique node ID for this node
    */
   String getNodeID();
