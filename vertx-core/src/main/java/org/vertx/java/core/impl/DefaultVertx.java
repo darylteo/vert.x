@@ -19,24 +19,7 @@ package org.vertx.java.core.impl;
 import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.ResourceLeakDetector;
-
-import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.ServiceLoader;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.vertx.java.core.AsyncResult;
-import org.vertx.java.core.AsyncResultHandler;
-import org.vertx.java.core.Context;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
+import org.vertx.java.core.*;
 import org.vertx.java.core.datagram.DatagramSocket;
 import org.vertx.java.core.datagram.InternetProtocolFamily;
 import org.vertx.java.core.datagram.impl.DefaultDatagramSocket;
@@ -64,6 +47,15 @@ import org.vertx.java.core.sockjs.impl.DefaultSockJSServer;
 import org.vertx.java.core.spi.Action;
 import org.vertx.java.core.spi.cluster.ClusterManager;
 import org.vertx.java.core.spi.cluster.ClusterManagerFactory;
+
+import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.ServiceLoader;
+import java.util.concurrent.*;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author <a href="http://tfox.org">Tim Fox</a>

@@ -16,27 +16,15 @@
 
 package org.vertx.java.fakecluster;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.spi.Action;
 import org.vertx.java.core.spi.VertxSPI;
-import org.vertx.java.core.spi.cluster.AsyncMap;
-import org.vertx.java.core.spi.cluster.AsyncMultiMap;
-import org.vertx.java.core.spi.cluster.ChoosableIterable;
-import org.vertx.java.core.spi.cluster.ClusterManager;
-import org.vertx.java.core.spi.cluster.NodeListener;
+import org.vertx.java.core.spi.cluster.*;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class FakeClusterManager implements ClusterManager {
 
